@@ -9,10 +9,11 @@ import time
 import threading
 from googletrans import Translator
 import random
+import pygame
 # Initialize the speech recognition and text-to-speech engines
 recognizer = sr.Recognizer()
 text_to_speech = pyttsx3.init()
-
+pygame.mixer.init()
 
 #dictionary to store tasks in the format:{task_name:task_description}
 tasks={}
@@ -26,7 +27,7 @@ def speak(text):
 def listen():
     with sr.Microphone() as source:
         print("Listening...")
-        audio = recognizer.listen(source,timeout=2)
+        audio = recognizer.listen(source,timeout=5)
     
     try:
         command = recognizer.recognize_google(audio)
@@ -38,6 +39,26 @@ def listen():
     except sr.RequestError as e:
         print("Sorry, an error occurred. {0}".format(e))
         return ""
+
+
+
+# play music
+def play_music(music_path):
+    pygame.mixer.music.load(music_path)
+    pygame.mixer.music.play()
+
+# Function to pause music
+def pause_music():
+    pygame.mixer.music.pause()
+
+# Function to resume music
+def resume_music():
+    pygame.mixer.music.unpause()
+
+# Function to stop music
+def stop_music():
+    pygame.mixer.music.stop()
+
 
 # Function to handle voice commands
 def handle_command(command):
@@ -84,7 +105,7 @@ def handle_command(command):
             speak(f"Task '{task_name}' deleted.")
         else:
             speak("Task '{task_name}' does not exist.")
-
+   
 
 #translate my word   
     elif "translate" in command.lower():
@@ -101,18 +122,56 @@ def handle_command(command):
             speak(f"The translation is: {translation.text}")
         else:
             speak("Please specify the text to translate.")
-    elif "exit" or "bye" or "close" in command.lower():
-        speak("Goodbye!")
-        exit()
+    # elif "exit" or "bye" or "close" in command.lower():
+    #     speak("Goodbye!")
+    #     exit()
+  
+    # elif "play music" in command.lower():
+    #     speak("Sure, what song would you like to play?")
+    #     song_name = listen()
+    #     if  song_name:
+    #         # Replace 'path/to/your/song.mp3' with the actual path to your downloaded song
+    #         music_path =r'C:\Users\Admin\Music\lean-on.mp3'
+
+    #         play_music(music_path)
+    #         speak(f"Now playing: {song_name}")
+    #     else:
+    #         speak("Please specify the song to play.")
+            
+    # Handle music commands in the handle_command function
+    elif re.match(r"play music (.+)", command, re.IGNORECASE):
+        match = re.match(r"play music (.+)", command, re.IGNORECASE)
+        if match:
+            song_name = match.group(1)
+            # Replace 'path/to/your/song.mp3' with the actual path to your downloaded song
+            music_path =r'C:\Users\Admin\Music\lean-on.mp3'
+            play_music(music_path)
+            speak(f"Now playing: {song_name}")
+        else:
+            speak("Please specify the song to play.")
+
+
+    elif "pause music" in command.lower():
+        pause_music()
+        speak("Music paused.")
+
+    elif "resume music" in command.lower():
+        resume_music()
+        speak("Music resumed.")
+
+    elif "stop music" in command.lower():
+        stop_music()
+        speak("Music stopped.")
+
+    
+    
     else:
         speak("I'm not sure how to respond to that.")
-
-
-
+    
 
         # Main loop
 if __name__ == "__main__":
-    speak("Hello! I am your voice assistant zoro, luffys crew mate, how can i help you.")
+    speak("Hello! I am your voice assistant zoro.")
    # open_notepad()
     
     while True:
