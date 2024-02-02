@@ -10,11 +10,25 @@ import threading
 from googletrans import Translator
 import random
 import pygame
+import requests
+import wikipediaapi
+
+
+
+
+
+
 # Initialize the speech recognition and text-to-speech engines
 recognizer = sr.Recognizer()
 text_to_speech = pyttsx3.init()
+text_to_speech.setProperty('rate', 170)
+text_to_speech.setProperty('volume', 1.0) 
+WETEHER_API_KEY = 'a5c751a33975b4af1a7b3ca28e6032be'
 pygame.mixer.init()
-
+available_songs = [
+    {"title": "Lean On", "path": r'C:\Users\Admin\Music\lean-on.mp3'},
+    {"title": "My heart will go on", "path": r'C:\Users\Admin\Music\my heart will go on.mp3'},
+ ]
 #dictionary to store tasks in the format:{task_name:task_description}
 tasks={}
 
@@ -60,6 +74,16 @@ def stop_music():
     pygame.mixer.music.stop()
 
 
+def search_person_wikipedia(person_name):
+    wiki_wiki = wikipediaapi.Wikipedia('en')
+    page_py = wiki_wiki.page(person_name)
+
+    if page_py.exists():
+        return page_py.text[:500]  # Limiting the response to the first 500 characters for brevity
+    else:
+        return f"Sorry, I couldn't find information about {person_name} on Wikipedia."
+
+
 # Function to handle voice commands
 def handle_command(command):
     if "hello" in command.lower():
@@ -78,7 +102,6 @@ def handle_command(command):
         speak("What else i can do for you, say features to know other task")
     elif "features" in command.lower():
         speak("I have many features.I can Translate a language, open application, set task and even play games.")
-
 
 #tasks asignmeet
     elif "add task" in command.lower():
@@ -122,33 +145,26 @@ def handle_command(command):
             speak(f"The translation is: {translation.text}")
         else:
             speak("Please specify the text to translate.")
-    # elif "exit" or "bye" or "close" in command.lower():
-    #     speak("Goodbye!")
-    #     exit()
-  
-    # elif "play music" in command.lower():
-    #     speak("Sure, what song would you like to play?")
-    #     song_name = listen()
-    #     if  song_name:
+
+    # elif re.match(r"play music (.+)", command, re.IGNORECASE):
+    #     match = re.match(r"play music (.+)", command, re.IGNORECASE)
+    #     if match:
+    #         song_name = match.group(1)
     #         # Replace 'path/to/your/song.mp3' with the actual path to your downloaded song
     #         music_path =r'C:\Users\Admin\Music\lean-on.mp3'
-
     #         play_music(music_path)
     #         speak(f"Now playing: {song_name}")
     #     else:
     #         speak("Please specify the song to play.")
-            
-    # Handle music commands in the handle_command function
-    elif re.match(r"play music (.+)", command, re.IGNORECASE):
-        match = re.match(r"play music (.+)", command, re.IGNORECASE)
-        if match:
-            song_name = match.group(1)
-            # Replace 'path/to/your/song.mp3' with the actual path to your downloaded song
-            music_path =r'C:\Users\Admin\Music\lean-on.mp3'
-            play_music(music_path)
-            speak(f"Now playing: {song_name}")
+# Handle music commands in the handle_command function
+    elif re.match(r"play music", command, re.IGNORECASE):
+        if available_songs:
+        # Randomly select a song from the list
+            selected_song = random.choice(available_songs)
+            play_music(selected_song["path"])
+            speak(f"Now playing: {selected_song['title']}")
         else:
-            speak("Please specify the song to play.")
+            speak("There are no songs available.")
 
 
     elif "pause music" in command.lower():
@@ -163,15 +179,45 @@ def handle_command(command):
         stop_music()
         speak("Music stopped.")
 
+    elif "weather" in command.lower():
+        speak("Sure, please specify the city.")
+        city = listen()
+
+        if city:
+            # Get weather information from OpenWeatherMap API
+            weather_api_url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WETEHER_API_KEY}"
+            response = requests.get(weather_api_url)
+            weather_data = response.json()
+
+            if response.status_code == 200:
+                description = weather_data['weather'][0]['description']
+                temperature = weather_data['main']['temp']
+                temperature_celsius = temperature - 273.15  # Convert temperature to Celsius
+
+                speak(f"The weather in {city} is {description} with a temperature of {temperature_celsius:.2f} degrees Celsius.")
+            else:
+                speak("Sorry, I couldn't retrieve the weather information.")
     
-    
+
+    elif "search Wikipedia for" in command.lower():
+        match = re.match(r"search Wikipedia for (.+)", command, re.IGNORECASE)
+        if match:
+            person_name = match.group(1)
+            result = search_person_wikipedia(person_name)
+            speak(result)
+        else:
+            speak("Please specify the person you want to search for on Wikipedia.")
+
+
+
+
     else:
         speak("I'm not sure how to respond to that.")
     
 
         # Main loop
 if __name__ == "__main__":
-    speak("Hello! I am your voice assistant zoro.")
+    speak("Hello! I am your voice assistant zoro. How can i help you!")
    # open_notepad()
     
     while True:
