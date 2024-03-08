@@ -1,3 +1,5 @@
+from tkinter import *
+from PIL import Image, ImageTk, ImageSequence
 import speech_recognition as sr
 import pyttsx3
 import datetime
@@ -14,21 +16,21 @@ import requests
 import wikipedia
 import logging
 import webbrowser
+import sys
 
 # Initialize the speech recognition and text-to-speech engines
 recognizer = sr.Recognizer()
 text_to_speech = pyttsx3.init()
-text_to_speech.setProperty('rate', 170)
+text_to_speech.setProperty('rate', 130)
 text_to_speech.setProperty('volume', 1.0) 
 WETEHER_API_KEY = 'a5c751a33975b4af1a7b3ca28e6032be'
 pygame.mixer.init()
 available_songs = [
     {"title": "Lean On", "path": r'C:\Users\Admin\Music\lean-on.mp3'},
-    {"title": "My heart will go on", "path": r'C:\Users\Admin\Music\my-heart-will-go-on.mp3'},
+    {"title": "My heart will go on", "path": r'C:\Users\Admin\Music\my-heart-will-go-on.mp3'}
  ]
-#dictionary to store tasks in the format:{task_name:task_description}
+# {task_name:task_description}
 tasks={}
-
 def search_website(query, website):
     # Define the base URL for the website
     base_url = {
@@ -67,8 +69,6 @@ def listen():
     except sr.RequestError as e:
         print("Sorry, an error occurred. {0}".format(e))
         return ""
-
-
 
 # play music
 def play_music(music_path):
@@ -110,8 +110,6 @@ def search_wikipedia(search_term):
     # Unexpected error
     logging.error(f"Error searching Wikipedia: {e}")
     return "Something went wrong while searching Wikipedia. Please try again later."
-  
-
 
 # Function to handle voice commands
 def handle_command(command):
@@ -119,20 +117,18 @@ def handle_command(command):
         speak("Hello! How can I assist you today?")  
     elif "open notepad" in command.lower():
         os.system("notepad.exe")
-        speak("What else i can do for you, say features to know other task")
+        speak("What else can I do for you? Say 'features' to know other tasks.")
     elif "open spotify" in command.lower():
         spotify_path = r"C:\Users\Admin\AppData\Roaming\Spotify\Spotify.exe"  # Replace with the actual path
         os.system(spotify_path)
         speak("What else can I do for you? Say 'features' to know other tasks.")
-
     elif "time" in command.lower():
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
         speak("The current time is " + current_time)
-        speak("What else i can do for you, say features to know other task")
+        speak("What else can I do for you? Say 'features' to know other tasks.")
     elif "features" in command.lower():
-        speak("I have many features.I can Translate a language, open application, set task and even play games.")
-
-#tasks asignmeet
+        speak("I have many features. like I can Translate a language, open applications, set task, do a web search and also search for people on google.")
+    
     elif "add task" in command.lower():
         speak("Sure,give a title for the task you would like to add?")
         task_name = listen()
@@ -157,9 +153,7 @@ def handle_command(command):
             speak(f"Task '{task_name}' deleted.")
         else:
             speak("Task '{task_name}' does not exist.")
-   
-
-#translate my word   
+# Handle other commands similarly
     elif "translate" in command.lower():
         speak("Sure, what would you like to translate?")
         text_to_translate = listen()
@@ -174,18 +168,7 @@ def handle_command(command):
             speak(f"The translation is: {translation.text}")
         else:
             speak("Please specify the text to translate.")
-
-    # elif re.match(r"play music (.+)", command, re.IGNORECASE):
-    #     match = re.match(r"play music (.+)", command, re.IGNORECASE)
-    #     if match:
-    #         song_name = match.group(1)
-    #         # Replace 'path/to/your/song.mp3' with the actual path to your downloaded song
-    #         music_path =r'C:\Users\Admin\Music\lean-on.mp3'
-    #         play_music(music_path)
-    #         speak(f"Now playing: {song_name}")
-    #     else:
-    #         speak("Please specify the song to play.")
-# Handle music commands in the handle_command function
+    
     elif re.match(r"play music", command, re.IGNORECASE):
         if available_songs:
         # Randomly select a song from the list
@@ -194,8 +177,6 @@ def handle_command(command):
             speak(f"Now playing: {selected_song['title']}")
         else:
             speak("There are no songs available.")
-
-
     elif "pause music" in command.lower():
         pause_music()
         speak("Music paused.")
@@ -227,6 +208,7 @@ def handle_command(command):
             else:
                 speak("Sorry, I couldn't retrieve the weather information.")
     
+
     # wikipedia search    
     elif "search for" in command.lower():
             # Extract search term after "search for"
@@ -234,6 +216,7 @@ def handle_command(command):
             # Perform Wikipedia search and provide feedback
             result = search_wikipedia(search_term)
             speak(result)
+
 
     # browser open
     elif "search website" in command.lower():
@@ -246,19 +229,54 @@ def handle_command(command):
             search_website(query, website)
         else:
             speak("Please specify the website and the query.")
-            
 
+class Widget:
+    def __init__(self):
+        self.root = Tk()
+        self.root.title('VOICE ASSISTANT ZORO')
+        self.root.geometry('520x320')
 
+        img = ImageTk.PhotoImage(Image.open(r'C:\Users\Admin\Documents\TYITPROJECT\main project file\wolves.png'))
+        panel = Label(self.root, image=img)
+        panel.pack(side='right', fill='both', expand='no')
 
-    else:
-        speak("I'm not sure how to respond to that.")
+        self.userFrame = LabelFrame(self.root, text='ZORO', font=('Railways', 24, 'bold'))
+        self.userFrame.pack(fill='both', expand='yes')
 
-        # Main loop
+        gif_path = r'C:\Users\Admin\Documents\TYITPROJECT\main project file\visualizer.gif'
+        self.gif = Image.open(gif_path)
+        self.animate_gif()
+
+        btn = Button(self.root, text='Speak', font=('railways', 10, 'bold'), bg='#186F65', fg='white', command=self.start_voice_assistant)
+        btn.pack(fill='x', expand='no')
+
+        btn2 = Button(self.root, text='Close', font=('railways', 10, 'bold'), bg='white', fg='#7C73C0', command=self.root.destroy)
+        btn2.pack(fill='x', expand='no')
+
+        self.root.mainloop()
+
+    def animate_gif(self):
+        frames = [ImageTk.PhotoImage(frame.resize((750, 530))) for frame in ImageSequence.Iterator(self.gif)]
+        self.gif_label = Label(self.userFrame, image=frames[0], bg='black')
+        self.gif_label.grid(row=0, column=0, padx=10, pady=10)
+        self.animate_gif_frames(frames)
+
+    def animate_gif_frames(self, frames):
+        def update_frame():
+            frame = frames[self.gif_idx]
+            self.gif_label.config(image=frame)
+            self.gif_idx = (self.gif_idx + 1) % len(frames)
+            self.root.after(100, update_frame)
+
+        self.gif_idx = 0
+        update_frame()
+
+    def start_voice_assistant(self):
+        speak("Hello! I am your voice assistant zoro. How can i help you!")
+        while True:
+            command = listen()
+            if command:
+                handle_command(command)
+
 if __name__ == "__main__":
-    speak("Hello! I am your voice assistant zoro. How can i help you!")
-   # open_notepad()
-    
-    while True:
-        command = listen()
-        if command:
-            handle_command(command)
+    widget = Widget()
