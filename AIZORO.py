@@ -18,6 +18,7 @@ import logging
 import webbrowser
 import sys
 
+
 # Initialize the speech recognition and text-to-speech engines
 recognizer = sr.Recognizer()
 text_to_speech = pyttsx3.init()
@@ -26,8 +27,13 @@ text_to_speech.setProperty('volume', 1.0)
 WETEHER_API_KEY = 'a5c751a33975b4af1a7b3ca28e6032be'
 pygame.mixer.init()
 available_songs = [
-    {"title": "Lean On", "path": r'C:\Users\Admin\Music\lean-on.mp3'},
-    {"title": "My heart will go on", "path": r'C:\Users\Admin\Music\my-heart-will-go-on.mp3'}
+    {"title": "lean on", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\lean-on.mp3'},
+    {"title": "my heart will go on", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\my-heart-will-go-on.mp3'},
+    {"title": "baby", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\baby.mp3'},
+    {"title": "beliver", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\beliver.mp3'},
+    {"title": "cheap thrills", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\cheap-thrills.mp3'},
+    {"title": "laal bindi", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\laal-bindi.mp3'},
+     {"title": "see you again", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\see-you-again.mp3'}
  ]
 # {task_name:task_description}
 tasks={}
@@ -229,12 +235,15 @@ def handle_command(command):
             search_website(query, website)
         else:
             speak("Please specify the website and the query.")
-
+    elif "bye" or "close" in command.lower():
+        if "bye" in command.lower() or "close" in command.lower():
+            speak("Closing the assistant. Press speak to start again")
+            sys.exit()  # Exit the program
 class Widget:
     def __init__(self):
         self.root = Tk()
         self.root.title('VOICE ASSISTANT ZORO')
-        self.root.geometry('520x320')
+        self.root.geometry('620x420')
 
         img = ImageTk.PhotoImage(Image.open(r'C:\Users\Admin\Documents\TYITPROJECT\main project file\wolves.png'))
         panel = Label(self.root, image=img)
@@ -255,28 +264,39 @@ class Widget:
 
         self.root.mainloop()
 
+        self.animate_thread = None
+
     def animate_gif(self):
         frames = [ImageTk.PhotoImage(frame.resize((750, 530))) for frame in ImageSequence.Iterator(self.gif)]
         self.gif_label = Label(self.userFrame, image=frames[0], bg='black')
         self.gif_label.grid(row=0, column=0, padx=10, pady=10)
         self.animate_gif_frames(frames)
+        self.frames = frames  # Assuming frames are generated here
 
     def animate_gif_frames(self, frames):
+        self.gif_idx = 0  
         def update_frame():
+            nonlocal frames
             frame = frames[self.gif_idx]
             self.gif_label.config(image=frame)
             self.gif_idx = (self.gif_idx + 1) % len(frames)
-            self.root.after(100, update_frame)
-
-        self.gif_idx = 0
-        update_frame()
-
+            self.root.after(100, update_frame)  # Schedule next update
+        update_frame()  # Start the animation loop  
     def start_voice_assistant(self):
-        speak("Hello! I am your voice assistant zoro. How can i help you!")
-        while True:
-            command = listen()
-            if command:
-                handle_command(command)
+        speak("Hello! I am your voice assistant Zoro. How can I help you?")
+        self.frames = self.animate_gif()  # Assuming animation generates frames
 
+    # Define a function to continuously listen for commands
+        def listen_for_commands():
+            while True:
+                command = listen()
+                if command:
+                    handle_command(command)
+
+    # Start listening for commands in a separate thread
+        command_thread = threading.Thread(target=listen_for_commands)
+        command_thread.start()
 if __name__ == "__main__":
     widget = Widget()
+
+
