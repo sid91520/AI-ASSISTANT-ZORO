@@ -18,6 +18,8 @@ import wikipedia
 import logging
 import webbrowser
 import sys
+import tkinter.messagebox as messagebox
+import sqlite3
 
 # Initialize the speech recognition and text-to-speech engines
 recognizer = sr.Recognizer()
@@ -269,6 +271,57 @@ def handle_command(command):
 
 
 
+class FeedbackForm:
+    def __init__(self):
+        self.root = Tk()
+        self.root.title('Feedback Form')
+        self.root.geometry('400x200')
+
+        self.Email_label = Label(self.root, text='Email:')
+        self.Email_label.grid(row=0, column=0, padx=5, pady=5, sticky='e')
+        self.Email_entry = Entry(self.root)
+        self.Email_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        self.name_label = Label(self.root, text='Name:')
+        self.name_label.grid(row=1, column=0, padx=5, pady=5, sticky='e')
+        self.name_entry = Entry(self.root)
+        self.name_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        self.feedback_label = Label(self.root, text='Feedback:')
+        self.feedback_label.grid(row=2, column=0, padx=5, pady=5, sticky='e')
+        self.feedback_entry = Entry(self.root)
+        self.feedback_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        self.submit_button = Button(self.root, text='Submit', command=self.submit_feedback)
+        self.submit_button.grid(row=3, column=0, columnspan=2, padx=5, pady=5)
+
+        self.root.mainloop()
+
+    def submit_feedback(self):
+        name = self.name_entry.get()
+        feedback = self.feedback_entry.get()
+        email = self.Email_entry.get()
+
+
+
+
+        if email and name and feedback:
+            self.insert_feedback(email, name, feedback)
+            messagebox.showinfo('Feedback Submitted', 'Thank you for your feedback!')
+            self.root.destroy()
+        else:
+            messagebox.showerror('Error', 'Please fill in all fields.')
+
+    def insert_feedback(self,email, name, feedback):
+        conn = sqlite3.connect('feedback.db')
+        c = conn.cursor()
+        c.execute('CREATE TABLE IF NOT EXISTS feedback (email TEXT,name TEXT, feedback TEXT)')
+        c.execute('INSERT INTO feedback VALUES (?, ?, ?)', (email, name, feedback))
+        conn.commit()
+        conn.close()
+
+
+
 class Widget:
     def __init__(self):
         self.root = Tk()
@@ -288,7 +341,7 @@ class Widget:
         btn = Button(self.root, text='Speak', font=('railways', 15, 'bold'), bg='#186F65', fg='white', command=self.start_voice_assistant)
         btn.grid(row=1, column=0, padx=3, pady=3)
 
-        btn2 = Button(self.root, text='Close', font=('railways', 15, 'bold'), bg='white', fg='#7C73C0', command=self.root.destroy)
+        btn2 = Button(self.root, text='Close', font=('railways', 15, 'bold'), bg='white', fg='#7C73C0', command=self.show_feedback_form)
         btn2.grid(row=2, column=0, padx=3, pady=3)
 
         self.conversation_text = Text(self.conversationFrame, font=('Helvetica', 12), wrap='word')
@@ -333,7 +386,8 @@ class Widget:
         # Start listening for commands in a separate thread
         command_thread = threading.Thread(target=listen_for_commands)
         command_thread.start()
-
+    def show_feedback_form(self):
+        feedback_form = FeedbackForm()
 
 if __name__ == "__main__":
     widget = Widget()
