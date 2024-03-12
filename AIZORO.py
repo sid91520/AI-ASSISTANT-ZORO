@@ -279,7 +279,7 @@ class Widget:
         self.userFrame.grid(row=0, column=0, padx=3, pady=3, sticky='nsew')
 
         self.conversationFrame = Frame(self.root)
-        self.conversationFrame.grid(row=0, column=1, padx=10, pady=10, sticky='nsew')
+        self.conversationFrame.grid(row=0, column=1, padx=5, pady=5, sticky='nsew')
 
         gif_path = r'C:\Users\Admin\Documents\TYITPROJECT\main project file\7kmF.gif'
         self.gif = Image.open(gif_path)
