@@ -24,9 +24,10 @@ import sqlite3
 # Initialize the speech recognition and text-to-speech engines
 recognizer = sr.Recognizer()
 text_to_speech = pyttsx3.init()
-text_to_speech.setProperty('rate', 130)
+text_to_speech.setProperty('rate', 160)
 text_to_speech.setProperty('volume', 1.0)
 WEATHER_API_KEY = 'a5c751a33975b4af1a7b3ca28e6032be'
+NEWS_API_KEY = '2bc317281f5b4f19b54b6ad7dcad74d3'
 pygame.mixer.init()
 available_songs = [
     {"title": "lean on", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\lean-on.mp3'},
@@ -65,7 +66,25 @@ def speak(text):
 
 
 # Function to listen to the user's voice
-def listen():
+# def listen():
+#     with sr.Microphone() as source:
+#         print("Listening...")
+#         audio = recognizer.listen(source, timeout=5)
+
+#     try:
+#         command = recognizer.recognize_google(audio)
+#         print("You said:", command)
+#         return command
+#     except sr.UnknownValueError:
+#         print("Sorry, I couldn't understand your audio.")
+#         return ""
+#     except sr.RequestError as e:
+#         print("Sorry, an error occurred. {0}".format(e))
+#         return ""
+    
+def listen(prompt_message=None):
+    if prompt_message:
+        speak(prompt_message)
     with sr.Microphone() as source:
         print("Listening...")
         audio = recognizer.listen(source, timeout=5)
@@ -80,6 +99,52 @@ def listen():
     except sr.RequestError as e:
         print("Sorry, an error occurred. {0}".format(e))
         return ""
+
+
+def fetch_news(topic):
+    url = f'https://newsapi.org/v2/top-headlines'
+    params = {
+        'apiKey': NEWS_API_KEY,
+        'category': topic 
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        news_data = response.json()
+        articles = news_data.get('articles', [])
+        if articles:
+            headlines = [article['title'] for article in articles[:5]]  # Get top 5 headlines
+            return headlines
+        else:
+            return ["No news available on this topic."]
+    else:
+        return ["Failed to fetch news. Please try again later."]
+
+def fetch_movie_recommendations(genre):
+    api_key = '5c73669b'
+    url = f'https://api.themoviedb.org/3/discover/movie?api_key={api_key}&with_genres={genre}&sort_by=popularity.desc'
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        movies = data.get('results', [])
+        if movies:
+            return [movie['title'] for movie in movies[:5]]  # Get top 5 recommended movies
+    return []
+def handle_movie_recommendation_command(command):
+    if "recommend a movie" in command.lower():
+        speak("Sure, what genre are you interested in?")
+        genre = listen()  # Assuming listen() gets user input
+        if genre:
+            recommendations = fetch_movie_recommendations(genre)
+            if recommendations:
+                speak("Here are some recommended movies:")
+                for movie in recommendations:
+                    speak(movie)
+            else:
+                speak("Sorry, I couldn't find any recommendations.")
+        else:
+            speak("Please specify a genre.")
 
 
 # play music
@@ -104,15 +169,6 @@ def stop_music():
 
 
 def search_wikipedia(search_term):
-    """
-    Searches Wikipedia for a specific term.
-
-    Args:
-        search_term: The term to search for.
-
-    Returns:
-        A string containing the summary or an informative message.
-    """
     try:
         summary = wikipedia.summary(search_term, sentences=2)  # Get summary with 2 sentences
         return summary
@@ -126,6 +182,9 @@ def search_wikipedia(search_term):
         # Unexpected error
         logging.error(f"Error searching Wikipedia: {e}")
         return "Something went wrong while searching Wikipedia. Please try again later."
+
+
+
 
 def handle_command(command):
     response = None  # Initialize response to None
@@ -141,7 +200,7 @@ def handle_command(command):
         os.system(spotify_path)
         speak("What else can I do for you? Say 'features' to know other tasks.")
         response = "What else can I do for you? Say 'features' to know other tasks."
-    elif "time" in command.lower():
+    elif "what is the time" in command.lower():
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
         speak("The current time is " + current_time)
         speak("What else can I do for you? Say 'features' to know other tasks.")
@@ -249,18 +308,36 @@ def handle_command(command):
         response=result
 
     # browser open
-    elif "search website" in command.lower():
-        # Extract the query and website from the command
-        match = re.match(r"search website (.+) for (.+)", command, re.IGNORECASE)
-        if match:
-            website = match.group(1).strip()
-            query = match.group(2).strip()
-            # Call the search_website function
-            search_website(query, website)
-            response=search_website
+    elif "search" in command:
+        search_query = listen('What do you want to search for?')
+        url = 'https://google.com/search?q=' + search_query
+        webbrowser.get().open(url)
+        speak('Here is what I found for ' + search_query)
+        response = 'Performed a search for ' + search_query
+        summary = search_wikipedia(search_query)
+        if summary:
+            speak(summary)
+            response += "\nHere is some information about the search query:\n" + summary
+
+        
+
+
+    elif "tell me some news" in command.lower():
+        speak("Sure, what type of news would you like to hear? For example, sports, politics, technology.")
+        user_preference = listen().lower()
+        news_headlines = fetch_news(user_preference)
+        if news_headlines:
+            speak("Here are the latest headlines:")
+            for headline in news_headlines:
+                speak(headline)
+                response=headline
         else:
-            speak("Please specify the website and the query.")
-            response="Please specify the website and the query."
+            speak("Sorry, I couldn't fetch the news at the moment.")
+    
+    elif "recommend a movie" in command.lower():
+        handle_movie_recommendation_command(command)
+        response = "Movie recommendations provided."
+
     elif "bye" or "close" in command.lower():
         if "bye" in command.lower() or "close" in command.lower():
             speak("Closing the assistant. Press speak to start again")
@@ -331,10 +408,10 @@ class Widget:
         self.userFrame = LabelFrame(self.root,bg='black',fg='white',text='ZORO', font=('Railways', 26, 'bold'))
         self.userFrame.grid(row=0, column=0, padx=3, pady=3, sticky='nsew')
 
-        self.conversationFrame = Frame(self.root)
+        self.conversationFrame = Frame(self.root,bg='blue')
         self.conversationFrame.grid(row=0, column=1, padx=5, pady=5, sticky='nsew')
 
-        gif_path = r'C:\Users\Admin\Documents\TYITPROJECT\main project file\7kmF.gif'
+        gif_path = r'C:\Users\Admin\Documents\TYITPROJECT\main project file\aiZoro.gif'
         self.gif = Image.open(gif_path)
         self.animate_gif()
 
