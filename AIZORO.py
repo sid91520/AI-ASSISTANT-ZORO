@@ -22,10 +22,13 @@ import tkinter.messagebox as messagebox
 import sqlite3
 
 # Initialize the speech recognition and text-to-speech engines
+engine = pyttsx3.init() 
 recognizer = sr.Recognizer()
 text_to_speech = pyttsx3.init()
-text_to_speech.setProperty('rate', 160)
+text_to_speech.setProperty('rate', 180)
 text_to_speech.setProperty('volume', 1.0)
+voices = engine.getProperty('voices')       #getting details of current voice
+engine.setProperty('voice', voices[1].id)
 WEATHER_API_KEY = 'a5c751a33975b4af1a7b3ca28e6032be'
 NEWS_API_KEY = '2bc317281f5b4f19b54b6ad7dcad74d3'
 pygame.mixer.init()
@@ -81,7 +84,17 @@ def speak(text):
 #     except sr.RequestError as e:
 #         print("Sorry, an error occurred. {0}".format(e))
 #         return ""
-    
+def fetch_joke():
+    url = "https://official-joke-api.appspot.com/random_joke"
+    response = requests.get(url)
+    if response.status_code == 200:
+        joke_data = response.json()
+        setup = joke_data['setup']
+        punchline = joke_data['punchline']
+        return f"{setup}\n{punchline}"
+    else:
+        return "Failed to fetch joke from API."
+        
 def listen(prompt_message=None):
     if prompt_message:
         speak(prompt_message)
@@ -319,6 +332,7 @@ def handle_command(command):
             speak(summary)
             response += "\nHere is some information about the search query:\n" + summary
 
+
         
 
 
@@ -338,12 +352,19 @@ def handle_command(command):
         handle_movie_recommendation_command(command)
         response = "Movie recommendations provided."
 
+    
     elif "bye" or "close" in command.lower():
         if "bye" in command.lower() or "close" in command.lower():
             speak("Closing the assistant. Press speak to start again")
             response="Closing the assistant. Press speak to start again"
             sys.exit()  # Exit the program
-
+    if "tell me a joke" in command.lower():
+        joke = fetch_joke()
+        if joke:
+            speak(joke)
+            response = "Here's a joke for you."
+        else:
+            response = "Sorry, I couldn't fetch a joke at the moment."
     return response
 
 
@@ -411,7 +432,7 @@ class Widget:
         self.conversationFrame = Frame(self.root,bg='blue')
         self.conversationFrame.grid(row=0, column=1, padx=5, pady=5, sticky='nsew')
 
-        gif_path = r'C:\Users\Admin\Documents\TYITPROJECT\main project file\aiZoro.gif'
+        gif_path = r'C:\Users\Siddharth\Documents\TYITPROJECT\aiZoro.gif'
         self.gif = Image.open(gif_path)
         self.animate_gif()
 
@@ -468,6 +489,3 @@ class Widget:
 
 if __name__ == "__main__":
     widget = Widget()
-
-
-
