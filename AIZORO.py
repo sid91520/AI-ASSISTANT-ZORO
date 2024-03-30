@@ -20,7 +20,9 @@ import webbrowser
 import sys
 import tkinter.messagebox as messagebox
 import sqlite3
-
+import speedtest
+from plyer import notification  #pip install plyer
+from bs4 import BeautifulSoup
 # Initialize the speech recognition and text-to-speech engines
 engine = pyttsx3.init() 
 recognizer = sr.Recognizer()
@@ -204,15 +206,18 @@ def handle_command(command):
     if "hello" in command.lower():
         speak("Hello! How can I assist you today?")
         response = "Hello! How can I assist you today?"
+    elif "hello, how are you" in command.lower():
+        speak("Hello! I'm fine, How can I assist you today?")
+        response = "Hello! How can I assist you today?"
     elif "open notepad" in command.lower():
         os.system("notepad.exe")
-        speak("What else can I do for you? Say 'features' to know other tasks.")
-        response = "What else can I do for you? Say 'features' to know other tasks."
+        speak("opening notepad What else can I do for you?")
+        response = "opening notepad What else can I do for you?"
     elif "open spotify" in command.lower():
-        spotify_path = r"C:\Users\Admin\AppData\Roaming\Spotify\Spotify.exe"  # Replace with the actual path
+        spotify_path = "Spotify.exe"  # Replace with the actual path
         os.system(spotify_path)
-        speak("What else can I do for you? Say 'features' to know other tasks.")
-        response = "What else can I do for you? Say 'features' to know other tasks."
+        speak("opening spotify What else can I do for you?")
+        response = "What else can I do for you?"    
     elif "what is the time" in command.lower():
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
         speak("The current time is " + current_time)
@@ -348,9 +353,34 @@ def handle_command(command):
         else:
             speak("Sorry, I couldn't fetch the news at the moment.")
     
+    
+    
     elif "recommend a movie" in command.lower():
         handle_movie_recommendation_command(command)
         response = "Movie recommendations provided."
+    
+    
+    
+    elif "play youtube" in command.lower():
+        search_query = command.lower().replace("play youtube", "").strip()
+        url = f"https://www.youtube.com/results?search_query={search_query}"
+        webbrowser.get().open(url)
+        speak(f"Playing YouTube videos related to {search_query}")
+        response = f"Playing YouTube videos related to {search_query}"
+
+
+    elif "internet speed" in command.lower():
+        try:
+            wifi = speedtest.Speedtest()
+            upload_net = wifi.upload() / 1048576  # Megabyte = 1024*1024 Bytes
+            download_net = wifi.download() / 1048576
+            response=("Wifi Upload Speed is", upload_net)
+            response=("Wifi download speed is ", download_net)
+            speak(f"Wifi download speed is {download_net} Megabytes per second.")
+            speak(f"Wifi Upload speed is {upload_net} Megabytes per second.")
+        except Exception as e:
+            print("Error occurred while testing internet speed:", e)
+            speak("Sorry, I couldn't test the internet speed at the moment. Please try again later.")
 
     
     elif "bye" or "close" in command.lower():
@@ -358,7 +388,9 @@ def handle_command(command):
             speak("Closing the assistant. Press speak to start again")
             response="Closing the assistant. Press speak to start again"
             sys.exit()  # Exit the program
-    if "tell me a joke" in command.lower():
+    
+    
+    elif "tell me a joke" in command.lower():
         joke = fetch_joke()
         if joke:
             speak(joke)
