@@ -26,7 +26,10 @@ from bs4 import BeautifulSoup
 import pyautogui
 from pynput.keyboard import Key, Controller
 from time import sleep
-# Initialize the speech recognition and text-to-speech engines
+import nltk
+from nltk.corpus import wordnet as wn
+nltk.download('wordnet')
+
 engine = pyttsx3.init() 
 recognizer = sr.Recognizer()
 text_to_speech = pyttsx3.init()
@@ -37,18 +40,17 @@ engine.setProperty('voice', voices[1].id)
 WEATHER_API_KEY = 'a5c751a33975b4af1a7b3ca28e6032be'
 NEWS_API_KEY = '2bc317281f5b4f19b54b6ad7dcad74d3'
 pygame.mixer.init()
-available_songs = [
-    {"title": "lean on", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\lean-on.mp3'},
-    {"title": "my heart will go on", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\my-heart-will-go-on.mp3'},
-    {"title": "baby", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfilebaby.mp3'},
-    {"title": "beliver", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\beliver.mp3'},
-    {"title": "cheap thrills", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\cheap-thrills.mp3'},
-    {"title": "laal bindi", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\laal-bindi.mp3'},
-    {"title": "see you again", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\see-you-again.mp3'}
-]
-# {task_name:task_description}
 tasks = {}
 keyboard = Controller()
+
+def get_word_definition(word):
+    synsets = wn.synsets(word)
+    if synsets:
+        definition = synsets[0].definition()
+        return definition
+    else:
+        return f"Sorry, I couldn't find the definition for '{word}'."
+
 
 def take_screenshot():
     current_directory = os.getcwd()
@@ -190,15 +192,20 @@ def handle_command(command):
         speak("I have many features. like I can Translate a language, open applications, set task, do a web search and also search for people on google.")
         response = "I have many features. like I can Translate a language, open applications, set task, do a web search and also search for people on google."
     
+    elif "define" in command.lower():
+        word_to_define = command.lower().split("define")[1].strip()
+        definition = get_word_definition(word_to_define)
+        speak(definition)
+        response = definition
+
     elif "screenshot" in command.lower():
         take_screenshot()
         speak("Screenshot taken and saved in your main directory")
-        response = "Screenshot taken and saved in your main directory"
+        response = "Screenshot taken "
 
 
     elif "pause" in command.lower():
-        pyautogui.click(x=400, y=400)  # Adjust x and y values based on the actual coordinates
-        speak("Video paused")
+        pyautogui.click(x=400, y=400)
         response = "Video paused"
 
     elif "play" in command.lower():
@@ -264,16 +271,8 @@ def handle_command(command):
         else:
             speak("Please specify the text to translate.")
             response = "Please specify the text to translate."
-    # Add other command conditions here
-    elif re.match(r"play music", command, re.IGNORECASE):
-        if available_songs:
-            # Randomly select a song from the list
-            selected_song = random.choice(available_songs)
-            play_music(selected_song["path"])
-            speak(f"Now playing: {selected_song['title']}")
-            response = f"Now playing: {selected_song['title']}"
-        else:
-            speak("There are no songs available.")
+            
+
     elif "pause music" in command.lower():
         pause_music()
         speak("Music paused.")
@@ -308,14 +307,12 @@ def handle_command(command):
             else:
                 speak("Sorry, I couldn't retrieve the weather information.")
     elif "search for" in command.lower():
-        # Extract search term after "search for"
         search_term = command.lower().split("search for")[1].strip()
-        # Perform Wikipedia search and provide feedback
         result = search_wikipedia(search_term)
         speak(result)
         response=result
 
-    # browser open
+
     elif "search" in command:
         search_query = listen('What do you want to search for?')
         url = 'https://google.com/search?q=' + search_query
@@ -366,8 +363,7 @@ def handle_command(command):
         if "bye" in command.lower() or "close" in command.lower():
             speak("Closing the assistant. Press speak to start again")
             response="Closing the assistant. Press speak to start again"
-            sys.exit()  # Exit the program
-
+            sys.exit() 
     return response
 
 class FeedbackForm:
