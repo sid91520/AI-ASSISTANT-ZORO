@@ -23,6 +23,9 @@ import sqlite3
 import speedtest
 from plyer import notification  #pip install plyer
 from bs4 import BeautifulSoup
+import pyautogui
+from pynput.keyboard import Key, Controller
+from time import sleep
 # Initialize the speech recognition and text-to-speech engines
 engine = pyttsx3.init() 
 recognizer = sr.Recognizer()
@@ -35,29 +38,43 @@ WEATHER_API_KEY = 'a5c751a33975b4af1a7b3ca28e6032be'
 NEWS_API_KEY = '2bc317281f5b4f19b54b6ad7dcad74d3'
 pygame.mixer.init()
 available_songs = [
-    {"title": "lean on", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\lean-on.mp3'},
-    {"title": "my heart will go on", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\my-heart-will-go-on.mp3'},
-    {"title": "baby", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\baby.mp3'},
-    {"title": "beliver", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\beliver.mp3'},
-    {"title": "cheap thrills", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\cheap-thrills.mp3'},
-    {"title": "laal bindi", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\laal-bindi.mp3'},
-    {"title": "see you again", "path": r'C:\Users\Admin\Documents\TYITPROJECT\musicfile\see-you-again.mp3'}
+    {"title": "lean on", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\lean-on.mp3'},
+    {"title": "my heart will go on", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\my-heart-will-go-on.mp3'},
+    {"title": "baby", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfilebaby.mp3'},
+    {"title": "beliver", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\beliver.mp3'},
+    {"title": "cheap thrills", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\cheap-thrills.mp3'},
+    {"title": "laal bindi", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\laal-bindi.mp3'},
+    {"title": "see you again", "path": r'C:\Users\Siddharth\Documents\TYITPROJECT\musicfile\see-you-again.mp3'}
 ]
 # {task_name:task_description}
 tasks = {}
+keyboard = Controller()
 
+def take_screenshot():
+    current_directory = os.getcwd()
+    screenshot_path = os.path.join(current_directory, "screenshot.jpg")
+    screenshot = pyautogui.screenshot()
+    screenshot.save(screenshot_path)
+
+def volumeup():
+    for i in range(5):
+        keyboard.press(Key.media_volume_up)
+        keyboard.release(Key.media_volume_up)
+        sleep(0.1)
+
+def volumedown():
+    for i in range(5):
+        keyboard.press(Key.media_volume_down)
+        keyboard.release(Key.media_volume_down)
+        sleep(0.1)
 
 def search_website(query, website):
-    # Define the base URL for the website
     base_url = {
         "google": "https://www.google.com/search?q=",
         "stackoverflow": "https://stackoverflow.com/search?q=",
-        # Add more websites as needed
     }
     if website.lower() in base_url:
-        # Construct the search URL
         search_url = base_url[website.lower()] + query.replace(" ", "+")
-        # Open the search URL in a web browser
         webbrowser.open(search_url)
         speak(f"Here are the search results for '{query}' on {website}.")
     else:
@@ -68,35 +85,6 @@ def search_website(query, website):
 def speak(text):
     text_to_speech.say(text)
     text_to_speech.runAndWait()
-
-
-# Function to listen to the user's voice
-# def listen():
-#     with sr.Microphone() as source:
-#         print("Listening...")
-#         audio = recognizer.listen(source, timeout=5)
-
-#     try:
-#         command = recognizer.recognize_google(audio)
-#         print("You said:", command)
-#         return command
-#     except sr.UnknownValueError:
-#         print("Sorry, I couldn't understand your audio.")
-#         return ""
-#     except sr.RequestError as e:
-#         print("Sorry, an error occurred. {0}".format(e))
-#         return ""
-def fetch_joke():
-    url = "https://official-joke-api.appspot.com/random_joke"
-    response = requests.get(url)
-    if response.status_code == 200:
-        joke_data = response.json()
-        setup = joke_data['setup']
-        punchline = joke_data['punchline']
-        return f"{setup}\n{punchline}"
-    else:
-        return "Failed to fetch joke from API."
-        
 def listen(prompt_message=None):
     if prompt_message:
         speak(prompt_message)
@@ -120,7 +108,9 @@ def fetch_news(topic):
     url = f'https://newsapi.org/v2/top-headlines'
     params = {
         'apiKey': NEWS_API_KEY,
-        'category': topic 
+        'category': topic, 
+        'language': 'en'
+
     }
 
     response = requests.get(url, params=params)
@@ -135,31 +125,6 @@ def fetch_news(topic):
             return ["No news available on this topic."]
     else:
         return ["Failed to fetch news. Please try again later."]
-
-def fetch_movie_recommendations(genre):
-    api_key = '5c73669b'
-    url = f'https://api.themoviedb.org/3/discover/movie?api_key={api_key}&with_genres={genre}&sort_by=popularity.desc'
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        movies = data.get('results', [])
-        if movies:
-            return [movie['title'] for movie in movies[:5]]  # Get top 5 recommended movies
-    return []
-def handle_movie_recommendation_command(command):
-    if "recommend a movie" in command.lower():
-        speak("Sure, what genre are you interested in?")
-        genre = listen()  # Assuming listen() gets user input
-        if genre:
-            recommendations = fetch_movie_recommendations(genre)
-            if recommendations:
-                speak("Here are some recommended movies:")
-                for movie in recommendations:
-                    speak(movie)
-            else:
-                speak("Sorry, I couldn't find any recommendations.")
-        else:
-            speak("Please specify a genre.")
 
 
 # play music
@@ -199,8 +164,6 @@ def search_wikipedia(search_term):
         return "Something went wrong while searching Wikipedia. Please try again later."
 
 
-
-
 def handle_command(command):
     response = None  # Initialize response to None
     if "hello" in command.lower():
@@ -217,7 +180,7 @@ def handle_command(command):
         spotify_path = "Spotify.exe"  # Replace with the actual path
         os.system(spotify_path)
         speak("opening spotify What else can I do for you?")
-        response = "What else can I do for you?"    
+        response = "Opening spotify. What else can I do for you?"
     elif "what is the time" in command.lower():
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
         speak("The current time is " + current_time)
@@ -226,6 +189,35 @@ def handle_command(command):
     elif "features" in command.lower():
         speak("I have many features. like I can Translate a language, open applications, set task, do a web search and also search for people on google.")
         response = "I have many features. like I can Translate a language, open applications, set task, do a web search and also search for people on google."
+    
+    elif "screenshot" in command.lower():
+        take_screenshot()
+        speak("Screenshot taken and saved in your main directory")
+        response = "Screenshot taken and saved in your main directory"
+
+
+    elif "pause" in command.lower():
+        pyautogui.click(x=400, y=400)  # Adjust x and y values based on the actual coordinates
+        speak("Video paused")
+        response = "Video paused"
+
+    elif "play" in command.lower():
+        keyboard.press("k")
+        speak("Video played")
+        response = "Video played"
+    elif "mute" in command.lower():
+        keyboard.press("m")
+        speak("Video muted")
+        response = "Video muted"
+    elif "volume up" in command.lower():
+        volumeup()
+        speak("Turning volume up, sir")
+        response = "Turning volume up, sir"
+    elif "volume down" in command.lower():
+        volumedown()
+        speak("Turning volume down, sir")
+        response = "Turning volume down, sir"
+    
     elif "add task" in command.lower():
         speak("Sure, give a title for the task you would like to add?")
         task_name = listen()
@@ -302,7 +294,6 @@ def handle_command(command):
         city = listen()
 
         if city:
-            # Get weather information from OpenWeatherMap API
             weather_api_url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}"
             response = requests.get(weather_api_url)
             weather_data = response.json()
@@ -316,7 +307,6 @@ def handle_command(command):
                 response=f"The weather in {city} is {description} with a temperature of {temperature_celsius:.2f} degrees Celsius."
             else:
                 speak("Sorry, I couldn't retrieve the weather information.")
-    # wikipedia search    
     elif "search for" in command.lower():
         # Extract search term after "search for"
         search_term = command.lower().split("search for")[1].strip()
@@ -338,9 +328,6 @@ def handle_command(command):
             response += "\nHere is some information about the search query:\n" + summary
 
 
-        
-
-
     elif "tell me some news" in command.lower():
         speak("Sure, what type of news would you like to hear? For example, sports, politics, technology.")
         user_preference = listen().lower()
@@ -353,20 +340,12 @@ def handle_command(command):
         else:
             speak("Sorry, I couldn't fetch the news at the moment.")
     
-    
-    
-    elif "recommend a movie" in command.lower():
-        handle_movie_recommendation_command(command)
-        response = "Movie recommendations provided."
-    
-    
-    
-    elif "play youtube" in command.lower():
-        search_query = command.lower().replace("play youtube", "").strip()
+    elif "open youtube" in command.lower():
+        search_query = command.lower().replace("openkkk youtube", "").strip()
         url = f"https://www.youtube.com/results?search_query={search_query}"
         webbrowser.get().open(url)
-        speak(f"Playing YouTube videos related to {search_query}")
-        response = f"Playing YouTube videos related to {search_query}"
+        speak(f"{search_query}")
+        response = f"{search_query}"
 
 
     elif "internet speed" in command.lower():
@@ -388,18 +367,8 @@ def handle_command(command):
             speak("Closing the assistant. Press speak to start again")
             response="Closing the assistant. Press speak to start again"
             sys.exit()  # Exit the program
-    
-    
-    elif "tell me a joke" in command.lower():
-        joke = fetch_joke()
-        if joke:
-            speak(joke)
-            response = "Here's a joke for you."
-        else:
-            response = "Sorry, I couldn't fetch a joke at the moment."
+
     return response
-
-
 
 class FeedbackForm:
     def __init__(self):
@@ -474,7 +443,7 @@ class Widget:
         btn2 = Button(self.root, text='Close', font=('railways', 15, 'bold'), bg='white', fg='#7C73C0', command=self.show_feedback_form)
         btn2.grid(row=2, column=0, padx=3, pady=3)
 
-        self.conversation_text = Text(self.conversationFrame, font=('Helvetica', 12), wrap='word')
+        self.conversation_text = Text(self.conversationFrame, font=('Helvetica', 10), wrap='word')
         self.conversation_text.pack(fill='both', expand=True)
 
 
@@ -483,7 +452,7 @@ class Widget:
         self.animate_thread = None
 
     def animate_gif(self):
-        frames = [ImageTk.PhotoImage(frame.resize((730, 500))) for frame in ImageSequence.Iterator(self.gif)]
+        frames = [ImageTk.PhotoImage(frame.resize((1000, 730))) for frame in ImageSequence.Iterator(self.gif)]
         self.gif_label = Label(self.userFrame, image=frames[0], bg='black')
         self.gif_label.grid(row=0, column=0, padx=10, pady=10)
         self.animate_gif_frames(frames)
